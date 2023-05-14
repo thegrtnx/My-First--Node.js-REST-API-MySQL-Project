@@ -67,8 +67,14 @@ module.exports = {
         updateUser(body, (err, results) => {
             if(err) {
                 console.log(err);
-                return;
+                return false;
             }
+            /*if(!results) {
+                return res.json({
+                    success: 0,
+                    message: "Failed to update user"
+                });
+            }*/
             return res.json({
                 success: 1,
                 message: "updated successfully",
