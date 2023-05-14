@@ -1,6 +1,7 @@
-const { createUser, getUserByUserId, getUsers, updateUser, deleteUser } = require("./user.service");
+const { createUser, getUserByUserId, getUsers, updateUser, deleteUser, getUserByEmail } = require("./user.service");
 
-const { genSaltSync, hashSync } = require("bcrypt");
+const { genSaltSync, hashSync, compareSync } = require("bcrypt");
+const { sign } = require("jsonwebtoken");
 
 module.exports = {
 
@@ -12,13 +13,12 @@ module.exports = {
 
         createUser(body, (err, results) => {
             if(err) {
-                console.log(err);
-                return res.status(500).json({
+                return res.json({
                     success: 0,
-                    message: "Database connection error"
+                    message: "User Account Exists"
                 });
             }
-
+            
             return res.status(200).json({
                 success: 1,
                 message: "user successfully added",
@@ -66,19 +66,14 @@ module.exports = {
         body.password = hashSync(body.password, salt);
         updateUser(body, (err, results) => {
             if(err) {
-                console.log(err);
-                return false;
-            }
-            if(!results) {
                 return res.json({
                     success: 0,
-                    message: "Failed to update user"
+                    message: "Duplicate emails found"
                 });
             }
             return res.json({
                 success: 1,
-                message: "updated successfully",
-                data: results
+                message: "updated successfully"
             })
         })
     },
@@ -87,20 +82,49 @@ module.exports = {
         const data = req.body;
         deleteUser(data, (err, results) => {
             if(err) {
-                console.log(err);
-                return;
-            }
-            if(!results) {
                 return res.json({
                     success: 0,
-                    message: "Record not found"
+                    message: err
                 });
             }
             return res.json({
                 success: 1,
-                message:"User deleted successfuly",
+                message:"User deleted successfully",
                 data: results
             })
         }) 
+    },
+
+    login: (req, res) => {
+        const body = req.body;
+        getUserByEmail(body.email, (err, results) => {
+            if(err) {
+                console.log(err);
+            }
+            if(!results) {
+                return res.json({
+                    success: 0,
+                    data: "Invalid email or password"
+                })
+            }
+            const result = compareSync(body.password, results.password);
+            if(result) {
+                results.password = undefined;
+                const jsontoken = sign({ result: results}, "qwe1234", {
+                    expiresIn: "1h"
+                });
+                return res.json({
+                    success: 1,
+                    message: "login successfully",
+                    token: jsontoken
+                });
+            } else {
+                return res.json({
+                    success: 1,
+                    message: "Invalid Email or Password"
+                });
+            }
+        });
     }
+
 }
