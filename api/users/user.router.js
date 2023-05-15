@@ -7,6 +7,6 @@ router.get("/", checkToken, getUsers);
 router.get("/:id", checkToken, getUserByUserId);
 router.patch("/", checkToken, updateUser);
 router.delete("/", checkToken, deleteUser);
-router.post("/login", checkToken, login);
+router.post("/login", login);
 
 module.exports = router;
